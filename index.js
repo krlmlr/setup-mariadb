@@ -3,6 +3,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const process = require('process');
+const spawnSync = require('child_process').spawnSync;
 
 function run(command) {
   console.log(command);
