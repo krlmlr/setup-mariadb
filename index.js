@@ -15,6 +15,7 @@ function addToPath(newPath) {
 }
 
 const mariadbVersion = parseFloat(process.env['INPUT_MARIADB-VERSION'] || '10.5').toFixed(1);
+const database = process.env['INPUT_DATABASE'];
 
 if (!['10.5', '10.4', '10.3', '10.2', '10.1'].includes(mariadbVersion)) {
   throw 'Invalid MariaDB version: ' + mariadbVersion;
