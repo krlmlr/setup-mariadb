@@ -19,15 +19,15 @@ if (!['10.5', '10.4', '10.3', '10.2', '10.1'].includes(mariadbVersion)) {
   throw 'Invalid MariaDB version: ' + mariadbVersion;
 }
 
+let bin;
+
 if (process.platform == 'darwin') {
   // install
   run(`brew install mariadb@${mariadbVersion}`);
 
   // start
-  const bin = `/usr/local/opt/mariadb@${mariadbVersion}/bin`;
+  bin = `/usr/local/opt/mariadb@${mariadbVersion}/bin`;
   run(`${bin}/mysql.server start`);
-
-  addToPath(bin);
 
   // add permissions
   if (mariadbVersion == '10.3' || mariadbVersion == '10.2') {
@@ -49,12 +49,12 @@ if (process.platform == 'darwin') {
   run(`curl -Ls -o mariadb.msi https://downloads.mariadb.com/MariaDB/mariadb-${fullVersion}/winx64-packages/mariadb-${fullVersion}-winx64.msi`);
   run(`msiexec /i mariadb.msi SERVICENAME=MariaDB /qn`);
 
-  addToPath(`C:\\Program Files\\MariaDB ${mariadbVersion}\\bin`);
+  bin = `C:\\Program Files\\MariaDB ${mariadbVersion}\\bin`;
 
   // add user
-  run(`mysql -u root -e "CREATE USER 'runneradmin'@'localhost' IDENTIFIED BY ''"`);
-  run(`mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'runneradmin'@'localhost'"`);
-  run(`mysql -u root -e "FLUSH PRIVILEGES"`);
+  run(`"${bin}\\mysql" -u root -e "CREATE USER 'runneradmin'@'localhost' IDENTIFIED BY ''"`);
+  run(`"${bin}\\mysql" -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'runneradmin'@'localhost'"`);
+  run(`"${bin}\\mysql" -u root -e "FLUSH PRIVILEGES"`);
 } else {
   // install
   run(`sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8`);
@@ -72,4 +72,17 @@ if (process.platform == 'darwin') {
   run(`sudo mysql -e "CREATE USER '$USER'@'localhost' IDENTIFIED BY ''"`);
   run(`sudo mysql -e "GRANT ALL PRIVILEGES ON *.* TO '$USER'@'localhost'"`);
   run(`sudo mysql -e "FLUSH PRIVILEGES"`);
+}
+
+if (bin) {
+  addToPath(bin);
+}
+
+if (database) {
+  // use spawnSync for escaping
+  const command = bin ? path.join(bin, "mysqladmin") : "mysqladmin";
+  const ret = spawnSync(command, ["create", database], {stdio: 'inherit'});
+  if (ret.status !== 0) {
+    throw ret.error;
+  }
 }
